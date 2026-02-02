@@ -1,0 +1,85 @@
+id: count_taxi_rows_python
+namespace: ammuszoomcamphw2
+description: |
+  Count rows in NYC TLC taxi CSVs (csv.gz) for a whole year using Python in a Docker task.
+  No Postgres/GCP load.
+
+inputs:
+  - id: taxi
+    type: SELECT
+    displayName: Select taxi type
+    values: [yellow, green]
+    defaults: green
+
+  - id: year
+    type: SELECT
+    displayName: Select year
+    values: ["2019", "2020","2021"]
+    defaults: "2020"
+
+tasks:
+  - id: count_rows_year
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11-slim
+    dependencies:
+      - requests
+      - kestra
+    script: |
+      from kestra import Kestra
+      import requests
+      import gzip
+      import io
+
+      taxi = "{{ inputs.taxi }}"
+      year = "{{ inputs.year }}"
+      months = [f"{m:02d}" for m in range(1, 13)]
+
+      base = f"https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{taxi}"
+
+      total = 0
+      per_month = []
+
+      for month in months:
+        file = f"{taxi}_tripdata_{year}-{month}.csv.gz"
+        url = f"{base}/{file}"
+
+        rows = 0
+        status = "ok"
+
+        try:
+          # Stream download
+          with requests.get(url, stream=True, timeout=120) as r:
+            if r.status_code != 200:
+              status = f"http_{r.status_code}"
+            else:
+              # Decompress streaming response and count lines
+              gz = gzip.GzipFile(fileobj=r.raw)
+
+              # Read line by line to avoid loading entire file
+              first = True
+              for _ in gz:
+                if first:
+                  first = False  # skip header
+                  continue
+                rows += 1
+
+        except Exception as e:
+          status = f"error: {type(e).__name__}"
+
+        total += rows
+        per_month.append({
+          "month": month,
+          "file": file,
+          "rows": rows,
+          "status": status,
+          "url": url
+        })
+
+      Kestra.outputs({
+        "taxi": taxi,
+        "year": year,
+        "total_rows": total,
+        "per_month": per_month
+      })
