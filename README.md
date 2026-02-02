@@ -2,7 +2,7 @@
 Solution to the Week 2 module homework
 ## Assignment
 Your task is to extend the existing flows to include data for the year 2021 (data exists i.e. from 2021-01-01 to 2021-07-31).
-After setting up the GCP account and running the [Docker Compose YAML](LINK_TO_DOCKER_COMPOSE), the Kestra flows for [GCP setup](LINK_TO_GCP_SETUP_FLOW) and retrieving the [key–value pairs](LINK_TO_KV_FLOW) were executed.
+After setting up the GCP account and running the [Docker Compose YAML](Ldocker-compose.yml), the Kestra flows for [GCP setup](LINK_TO_GCP_SETUP_FLOW) and retrieving the [key–value pairs](LINK_TO_KV_FLOW) were executed.
 
 To upload the Green and Yellow taxi datasets into BigQuery, an [ELT flow](LINK_TO_ELT_FLOW) was created. By setting the time period for backfill executions from **2021-01-01 00:00:00** to **2021-07-02 00:00:00**, the data for the year 2021 was loaded into BigQuery.
 
